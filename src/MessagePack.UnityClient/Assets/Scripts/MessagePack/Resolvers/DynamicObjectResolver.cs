@@ -1857,15 +1857,13 @@ namespace MessagePack.Internal
             }
             else
             {
-                // Public members with KeyAttribute except [Ignore] member.
+                
                 var searchFirst = true;
                 var hiddenIntKey = 0;
-
-
+                // Public members with KeyAttribute except [Ignore] member.
                 var memberInfoGroups = GetAllProperties(type).Concat(GetAllFields(type))
                     .OrderByDescending(group => group.Key);
 
-                //var memberInfos = GetAllProperties(type).Cast<MemberInfo>().Concat(GetAllFields(type));
                 var level = (number: Int32.MaxValue, offset: 0, max: -1);
                 foreach (var memberInfos in memberInfoGroups)
                 {
@@ -1909,10 +1907,7 @@ namespace MessagePack.Internal
                             if (pseudokey.Order != -1)
                             {
                                 var calculatedOrder = pseudokey.Order + level.offset;
-                                if (calculatedOrder > level.max)
-                                {
-                                    level.max = calculatedOrder;
-                                }
+                                level.max = Math.Max(level.max, calculatedOrder);
                                 key = new KeyAttribute(calculatedOrder);
                             }
                             else
@@ -2197,6 +2192,7 @@ namespace MessagePack.Internal
                 }
             }
 
+            // with declared only
             var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
             if (fields.Any())
             {
@@ -2204,11 +2200,6 @@ namespace MessagePack.Internal
                     .GroupBy(_ => level)
                     .First();
             }
-            // with declared only
-            //foreach (var item in type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            //{
-            //    yield return item;
-            //}
         }
 
         private static IEnumerable<IGrouping<int, MemberInfo>> GetAllProperties(Type type, int level = 0)
@@ -2221,8 +2212,8 @@ namespace MessagePack.Internal
                 }
             }
 
+            // with declared only
             var properties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-
             if (properties.Any())
             {
                 yield return properties
@@ -2230,12 +2221,6 @@ namespace MessagePack.Internal
                     .GroupBy(_ => level)
                     .First();
             }
-
-            // with declared only
-            //foreach (var item in type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly))
-            //{
-            //    yield return item;
-            //}
         }
 
         private static bool IsClassRecord(TypeInfo type)
