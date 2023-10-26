@@ -1860,6 +1860,7 @@ namespace MessagePack.Internal
                 // Public members with KeyAttribute except [Ignore] member.
                 var searchFirst = true;
                 var hiddenIntKey = 0;
+
                 var memberInfoGroups = GetAllProperties(type).Concat(GetAllFields(type))
                     .OrderByDescending(group => group.Key);
                 var level = (number: Int32.MaxValue, offset: 0, max: -1);
