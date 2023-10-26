@@ -1857,13 +1857,11 @@ namespace MessagePack.Internal
             }
             else
             {
-                
+                // Public members with KeyAttribute except [Ignore] member.
                 var searchFirst = true;
                 var hiddenIntKey = 0;
-                // Public members with KeyAttribute except [Ignore] member.
                 var memberInfoGroups = GetAllProperties(type).Concat(GetAllFields(type))
                     .OrderByDescending(group => group.Key);
-
                 var level = (number: Int32.MaxValue, offset: 0, max: -1);
                 foreach (var memberInfos in memberInfoGroups)
                 {
