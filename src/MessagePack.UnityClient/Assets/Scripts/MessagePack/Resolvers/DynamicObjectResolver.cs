@@ -1861,16 +1861,12 @@ namespace MessagePack.Internal
                 var searchFirst = true;
                 var hiddenIntKey = 0;
 
-                var memberInfoGroups = GetAllProperties(type).Concat(GetAllFields(type))
+                var memberInfoGroups = GetAllFieldsAndProperties(type)
                     .OrderByDescending(group => group.Key);
-                var level = (number: Int32.MaxValue, offset: 0, max: -1);
+                var level = (offset: 0, max: -1);
                 foreach (var memberInfos in memberInfoGroups)
                 {
-                    if (memberInfos.Key != level.number)
-                    {   // new level, reset offset.
-                        level.offset = level.max + 1;
-                        level.number = memberInfos.Key;
-                    }
+                    level.offset = level.max + 1;
 
                     foreach (var member in memberInfos.Select(CreateEmittableMember))
                     {
@@ -2179,6 +2175,26 @@ namespace MessagePack.Internal
                 ////|| type == typeof(DateTime) // OldSpec has no support, so for that and perf reasons a .NET native DateTime resolver exists.
                 ////|| type == typeof(string) // https://github.com/Cysharp/MasterMemory provides custom formatter for string interning.
                 ;
+        }
+
+        private static IEnumerable<IGrouping<int, MemberInfo>> GetAllFieldsAndProperties(Type type, int level = 0)
+        {
+            if (type.BaseType is object)
+            {
+                foreach (var item in GetAllFieldsAndProperties(type.BaseType, level + 1))
+                {
+                    yield return item;
+                }
+            }
+
+            // with declared only
+            var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+            var properties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+
+            yield return (fields.Any() ? fields : Enumerable.Empty<MemberInfo>())
+                .Concat(properties.Any() ? properties.Cast<MemberInfo>() : Enumerable.Empty<MemberInfo>())
+                .GroupBy(_ => level)
+                .First();
         }
 
         private static IEnumerable<IGrouping<int, FieldInfo>> GetAllFields(Type type, int level = 0)
