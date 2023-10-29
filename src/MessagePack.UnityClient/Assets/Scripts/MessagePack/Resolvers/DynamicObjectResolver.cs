@@ -10,7 +10,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -1861,25 +1860,12 @@ namespace MessagePack.Internal
                 // Public members with KeyAttribute except [Ignore] member.
                 var searchFirst = true;
                 var hiddenIntKey = 0;
-                // this
-                //var memberInfoGroups = GetAllProperties(type).Concat(GetAllFields(type))
-                //    .OrderByDescending(group => group.Key);
-                // or this.
                 var memberInfoGroups = GetAllFieldsAndProperties(type)
                     .OrderByDescending(group => group.Key);
-                var level = (number: Int32.MaxValue, offset: 0, max: -1);
+                var level = (offset: 0, max: -1);
                 foreach (var memberInfos in memberInfoGroups)
                 {
-                    // this
                     level.offset = level.max + 1;
-
-                    // or this
-                    //if (memberInfos.Key != level.number)
-                    //{   // new level, reset offset.
-                    //    level.offset = level.max + 1;
-                    //    level.number = memberInfos.Key;
-                    //}
-
 
                     foreach (var member in memberInfos.Select(CreateEmittableMember))
                     {
@@ -2212,47 +2198,6 @@ namespace MessagePack.Internal
             if (grouping != null)
             {
                 yield return grouping;
-            }
-        }
-
-        private static IEnumerable<IGrouping<int, FieldInfo>> GetAllFields(Type type, int level = 0)
-        {
-            if (type.BaseType is object)
-            {
-                foreach (var item in GetAllFields(type.BaseType, level + 1))
-                {
-                    yield return item;
-                }
-            }
-
-            // with declared only
-            var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            if (fields.Any())
-            {
-                yield return fields
-                    .GroupBy(_ => level)
-                    .First();
-            }
-        }
-
-        private static IEnumerable<IGrouping<int, MemberInfo>> GetAllProperties(Type type, int level = 0)
-        {
-            if (type.BaseType is object)
-            {
-                foreach (var item in GetAllProperties(type.BaseType, level + 1))
-                {
-                    yield return item;
-                }
-            }
-
-            // with declared only
-            var properties = type.GetProperties(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-            if (properties.Any())
-            {
-                yield return properties
-                    .Cast<MemberInfo>()
-                    .GroupBy(_ => level)
-                    .First();
             }
         }
 
